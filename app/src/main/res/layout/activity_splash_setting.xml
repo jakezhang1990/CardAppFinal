@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/splash_setting_bg"
+    tools:context=".SplashSettingActivity">
+
+    <ImageView
+        android:layout_width="500dp"
+        android:layout_height="260dp"
+        android:src="@drawable/setting_src"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="设置界面"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:layout_marginTop="35dp"
+        android:layout_marginLeft="25dp"
+        android:textStyle="bold"/>
+
+    <!--终端号-->
+    <TextView
+        android:id="@+id/lbl_1"
+        android:layout_width="90dp"
+        android:gravity="center"
+        android:layout_height="45dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/editv_machineNum"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="终端号 :"
+        android:textSize="16sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        android:layout_marginTop="90dp"
+        android:textColor="@color/white"/>
+
+    <EditText
+        android:id="@+id/editv_machineNum"
+        android:layout_width="300dp"
+        android:layout_height="45dp"
+        android:background="@drawable/write_circle_shape"
+        app:layout_constraintLeft_toRightOf="@id/lbl_1"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintBottom_toBottomOf="@id/lbl_1"
+        />
+
+    <!--通讯秘钥-->
+    <TextView
+        android:id="@+id/lbl_2"
+        android:layout_width="90dp"
+        android:gravity="center"
+        android:layout_height="45dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/editv_pwdkey"
+        app:layout_constraintTop_toBottomOf="@id/lbl_1"
+        android:text="通讯秘钥 :"
+        android:textSize="16sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/white"/>
+
+    <EditText
+        android:id="@+id/editv_pwdkey"
+        android:layout_width="300dp"
+        android:layout_height="45dp"
+        android:background="@drawable/write_circle_shape"
+        app:layout_constraintLeft_toRightOf="@id/lbl_2"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintBottom_toBottomOf="@id/lbl_2"
+        />
+
+    <!--服务器地址-->
+    <TextView
+        android:id="@+id/lbl_3"
+        android:layout_width="90dp"
+        android:gravity="center"
+        android:layout_height="45dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/editv_pwdkey"
+        app:layout_constraintTop_toBottomOf="@id/lbl_1"
+        android:text="通讯秘钥 :"
+        android:textSize="16sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/white"/>
+
+    <EditText
+        android:id="@+id/editv_pwdkey"
+        android:layout_width="300dp"
+        android:layout_height="45dp"
+        android:background="@drawable/write_circle_shape"
+        app:layout_constraintLeft_toRightOf="@id/lbl_2"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintBottom_toBottomOf="@id/lbl_2"
+        />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
