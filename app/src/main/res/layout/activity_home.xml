@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background"
-    tools:context=".HomeActivity">
+    tools:context="com.cardapp.HomeActivity">
 
     <ImageView
         app:layout_constraintRight_toRightOf="parent"

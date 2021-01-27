@@ -1,4 +1,4 @@
-package com.cardapp.card;
+package com.cardapp;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
