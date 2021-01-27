@@ -36,8 +36,7 @@ import okhttp3.Response;
 public class HomeActivity extends AppCompatActivity {
     CardDataReciver cardDataReciver;
     TextView tv_date;
-    SharedPreferences sharedPreferences;
-    SharedPreferences.Editor editor;
+
 
     private static CardOperator cardOperator = null;
 
@@ -63,8 +62,7 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         tv_date=findViewById(R.id.tv_date);
-        sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
-        editor=sharedPreferences.edit();
+
 
         TimeRunnable  timeRunnable=new TimeRunnable(tv_date);
         new Thread(timeRunnable).start();

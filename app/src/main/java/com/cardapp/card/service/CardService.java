@@ -24,11 +24,11 @@ public class CardService extends Service {
     public void onCreate() {
         super.onCreate();
         //registerReceiver()
-//        try {
-//            cardOperator=CardOperator.createObject();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+////        try {
+////            cardOperator=CardOperator.createObject();
+////        } catch (Exception e) {
+////            e.printStackTrace();
+////        }
     }
 
     @Override
