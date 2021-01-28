@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,7 +36,7 @@ import okhttp3.Response;
 
 public class HomeActivity extends AppCompatActivity {
     CardDataReciver cardDataReciver;
-    TextView tv_date;
+    TextView tv_date, tv_schoolName, tv_machineNum;
 
 
     private static CardOperator cardOperator = null;
@@ -55,6 +56,10 @@ public class HomeActivity extends AppCompatActivity {
         }
     });
 
+
+    private String TAG=HomeActivity.class.getSimpleName();
+    private SharedPreferences sharedPreferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +67,15 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         tv_date=findViewById(R.id.tv_date);
+        tv_schoolName=findViewById(R.id.tv_schoolName);
+        tv_machineNum=findViewById(R.id.tv_machineNum);
+
+        sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
+        tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
+        tv_machineNum.setText("机号："+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"01"));
+
+        //1分钟给服务器发一次机器状态
+        new Thread(new MachineStateRunnable()).start();
 
 
         TimeRunnable  timeRunnable=new TimeRunnable(tv_date);
@@ -102,8 +116,8 @@ public class HomeActivity extends AppCompatActivity {
         //post请求提交键值对
         OkHttpClient okHttpClient=new OkHttpClient();
         FormBody formBody = new FormBody.Builder()
-                .add("username", "admin")
-                .add("password", "admin")
+                .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
+                .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
                 .build();
         Request request=new Request.Builder()
                 .url(NetURL.URL_MACHINE_STATE).post(formBody).build();
@@ -112,12 +126,12 @@ public class HomeActivity extends AppCompatActivity {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
+                Log.i(TAG, "NetURL.URL_MACHINE_STATE onFailure: "+e);
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-
+                Log.i(TAG, "NetURL.URL_MACHINE_STATE onResponse: "+response.body().string());
             }
         });
 
@@ -140,4 +154,17 @@ public class HomeActivity extends AppCompatActivity {
         super.onStop();
         unregisterReceiver(cardDataReciver);
     }*/
+
+
+    class MachineStateRunnable implements Runnable{
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(60*1000);
+                getMessageHttp();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
