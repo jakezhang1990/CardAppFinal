@@ -160,7 +160,7 @@ public class HomeActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                Thread.sleep(60*1000);
+                Thread.sleep(6*1000);
                 getMessageHttp();
             } catch (InterruptedException e) {
                 e.printStackTrace();

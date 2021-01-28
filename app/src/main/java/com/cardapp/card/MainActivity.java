@@ -3,10 +3,13 @@ package com.cardapp.card;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,11 +17,25 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.cardapp.Commons;
+import com.cardapp.HomeActivity;
+import com.cardapp.NetURL;
+import com.cardapp.TimeRunnable;
 import com.cardapp.card.reciver.CardDataReciver;
 import com.cardapp.card.service.CardService;
 import com.cardapp.card.util.CardDataRst;
 import com.cardapp.card.util.CardOperator;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -50,11 +67,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     });
 
+    static TextView tv_date, tv_schoolName, tv_machineNum , tv_title;
+    private SharedPreferences sharedPreferences;
+    private String TAG=MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        /*setContentView(R.layout.activity_main);
         readText = findViewById(R.id.cardReadData);
         writeText = findViewById(R.id.cardWriteData);
         initPwdText = findViewById(R.id.initPwdData);
@@ -83,12 +103,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnStopService.setOnClickListener(this);
         btnRestOneBlk.setOnClickListener(this);
         //初始化卡设备
-        cardInitDev();
+        cardInitDev();*/
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setContentView(R.layout.activity_home);
+
+        tv_date=findViewById(R.id.tv_date);
+        tv_schoolName=findViewById(R.id.tv_schoolName);
+        tv_machineNum=findViewById(R.id.tv_machineNum);
+
+        tv_title=findViewById(R.id.tv_title);
+
+        sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
+        tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
+        tv_machineNum.setText("机号："+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"01"));
+
+        //1分钟给服务器发一次机器状态
+        new Thread(new MainActivity.MachineStateRunnable()).start();
+
+
+        TimeRunnable timeRunnable=new TimeRunnable(tv_date);
+        new Thread(timeRunnable).start();
 
         cardDataReciver = new CardDataReciver(new CallBackDataDisPlay());
         IntentFilter intentFilter = new IntentFilter("cn.soft.recvier.MY_RECIVER");
         registerReceiver(cardDataReciver, intentFilter);
 
+        Intent intent = new Intent(this, CardService.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("cardOp", cardOperator);
+        intent.putExtras(bundle);
+        startService(intent);
     }
 
 
@@ -251,8 +296,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static class CallBackDataDisPlay {
         public void onCallBack(CardDataRst cardDataRst) {
             if (cardDataRst != null) {
-                readText.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
+//                readText.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
+                tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
             }
         }
     }
+
+    class MachineStateRunnable implements Runnable{
+        @Override
+        public void run() {
+            do {
+                try {
+                    Thread.sleep(60*1000);
+                    getMessageHttp();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }while (true);
+
+        }
+    }
+
+    private void getMessageHttp(){
+        //post请求提交键值对
+        OkHttpClient okHttpClient=new OkHttpClient();
+        FormBody formBody = new FormBody.Builder()
+                .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
+                .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
+                .build();
+        Request request=new Request.Builder()
+                .url(NetURL.URL_MACHINE_STATE).post(formBody).build();
+        Call call=okHttpClient.newCall(request);
+
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.i(TAG, "NetURL.URL_MACHINE_STATE onFailure: "+e);
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                Log.i(TAG, "NetURL.URL_MACHINE_STATE onResponse: "+response.body().string());
+            }
+        });
+
+    }
+
 }

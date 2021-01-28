@@ -49,7 +49,7 @@ public class TimeRunnable implements Runnable{
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             if (msg.what==key1){
-                SimpleDateFormat sdf=new SimpleDateFormat("YYYY/MM/dd HH:mm ", Locale.CHINA);
+                SimpleDateFormat sdf=new SimpleDateFormat("yyyy/MM/dd HH:mm ", Locale.CHINA);
                 String date=sdf.format(new Date());
                 textView.setText(date);
             }

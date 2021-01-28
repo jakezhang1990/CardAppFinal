@@ -16,25 +16,25 @@ import androidx.annotation.Nullable;
 public class CardService extends Service {
 
     //
-    //  CardOperator cardOperator;
+      CardOperator cardOperator;
 
 
 
     @Override
     public void onCreate() {
         super.onCreate();
-        //registerReceiver()
-////        try {
-////            cardOperator=CardOperator.createObject();
-////        } catch (Exception e) {
-////            e.printStackTrace();
-////        }
+//        registerReceiver()
+        try {
+            cardOperator=CardOperator.createObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Bundle bundle = intent.getExtras();
-        CardOperator cardOperator = (CardOperator) bundle.getSerializable("cardOp");
+        /*Bundle bundle = intent.getExtras();
+        CardOperator cardOperator = (CardOperator) bundle.getSerializable("cardOp");*/
         Intent cardIntent = new Intent("cn.soft.recvier.MY_RECIVER");
 
         Thread thread = new Thread(new Runnable() {

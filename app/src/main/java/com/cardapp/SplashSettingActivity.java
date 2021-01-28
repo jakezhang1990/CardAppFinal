@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.cardapp.card.MainActivity;
 import com.cardapp.card.R;
 
 /**
@@ -56,7 +57,7 @@ public class SplashSettingActivity extends AppCompatActivity implements View.OnC
     @Override
     public void onClick(View v) {
         if (v.equals(btn_back)){
-            startActivity(new Intent(this,HomeActivity.class));
+            startActivity(new Intent(this,/*HomeActivity*/MainActivity.class));
             finish();
         }else if (v.equals(btn_save)){
             String terminal_numStr=editv_machineNum.getText().toString().trim();
@@ -68,7 +69,7 @@ public class SplashSettingActivity extends AppCompatActivity implements View.OnC
             String companyName=editv_companyName.getText().toString();
             editor.putString(Commons.SETTING_COMPANY_NAME,companyName);
             editor.commit();
-            startActivity(new Intent(this,HomeActivity.class));
+            startActivity(new Intent(this,MainActivity.class));
             finish();
         }
     }
