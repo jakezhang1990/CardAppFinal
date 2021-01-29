@@ -306,6 +306,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
                 tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) );
 
+                Log.i(TAG, "onCallBack: 广播回调刷新界面");
                 getMoneyHttp(cardDataRst.getM());//申请领款
 
             }
@@ -378,6 +379,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        Log.i(TAG, "getMoneyHttp: 卡片card_sn= "+card_sn);
 
         if (TextUtils.isEmpty(card_sn)){
             Toast.makeText(this,"卡片SN号读取失败，非IC卡",Toast.LENGTH_SHORT).show();
