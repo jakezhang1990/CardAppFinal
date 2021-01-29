@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -18,17 +19,22 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.cardapp.Commons;
+import com.cardapp.CreateOrderBean;
 import com.cardapp.HomeActivity;
 import com.cardapp.NetURL;
+import com.cardapp.OrderStatusResultBean;
 import com.cardapp.TimeRunnable;
 import com.cardapp.card.reciver.CardDataReciver;
 import com.cardapp.card.service.CardService;
 import com.cardapp.card.util.CardDataRst;
 import com.cardapp.card.util.CardOperator;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -293,11 +299,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         thread.start();
     }
 
-    public static class CallBackDataDisPlay {
+    public /*static*/ class CallBackDataDisPlay {
         public void onCallBack(CardDataRst cardDataRst) {
             if (cardDataRst != null) {
 //                readText.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
-                tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
+//                tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
+                tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) );
+
+                getMoneyHttp(cardDataRst.getM());//申请领款
+
             }
         }
     }
@@ -318,7 +328,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void getMessageHttp(){
-        //post请求提交键值对
+        //post请求提交键值对，1分钟向服务器发送一次状态
         OkHttpClient okHttpClient=new OkHttpClient();
         FormBody formBody = new FormBody.Builder()
                 .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
@@ -341,5 +351,184 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
     }
+
+    private void getMoneyHttp(BigDecimal balance){
+
+        /*
+        runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String str = null;
+                        try {
+                            str = cardOperator.getCardNumberStr();
+                            if (str == null) {
+                                Toast.makeText(getApplicationContext(), "未检查IC卡", Toast.LENGTH_LONG).show();
+                            } else {
+                                initCardText.setText(str);
+                            }
+                        } catch (InterruptedException e) {
+                            Toast.makeText(getApplicationContext(), "读取卡出错", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+        * */
+        String card_sn=null;
+        try {
+            card_sn=cardOperator.getCardKeyStr();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (TextUtils.isEmpty(card_sn)){
+            Toast.makeText(this,"卡片SN号读取失败，非IC卡",Toast.LENGTH_SHORT).show();
+        }else{
+            //申请领款接口
+            OkHttpClient okHttpClient=new OkHttpClient();
+            FormBody formBody = new FormBody.Builder()
+                    .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
+                    .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
+                    .add(Commons.SN_CARD_SN_NUMBER, card_sn)
+                    .build();
+            Request request=new Request.Builder()
+                    .url(NetURL.URL_APPLY_DRAW_MONEY).post(formBody).build();
+            Call call=okHttpClient.newCall(request);
+
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                    Log.i(TAG, "NetURL.URL_APPLY_DRAW_MONEY onFailure: "+e);
+                }
+
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    Log.i(TAG, "NetURL.URL_APPLY_DRAW_MONEY onResponse: "+response.body().string());
+                    String respon=response.body().string();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            CreateOrderBean createOrderBean=new Gson().fromJson(respon, new TypeToken<CreateOrderBean>(){}.getType());
+                            if (createOrderBean!=null){
+                                int status=createOrderBean.getStatus();
+                                String msg=createOrderBean.getMsg();
+                                if (status==1){
+                                    //成功，开始写卡
+//                                    tv_title.setText("余额:");
+                                    CreateOrderBean.DataBean dataBean=createOrderBean.getData();
+                                    if (dataBean!=null){
+                                        String data=dataBean.getMoney();
+                                        String totalMoney = String.valueOf(balance.add(new BigDecimal(data)) );
+                                        String orderNumber=dataBean.getSerial();
+                                        try {
+//                                                String data = writeText.getText().toString();
+                                            boolean ss = cardOperator.writeData(data, 1);
+//                                            writeText.setText(String.valueOf(ss));
+                                            int write_status=0;
+                                            if (ss){
+                                                //写卡成功 1
+                                                write_status=1;
+                                            }else{
+                                                //写卡失败 2
+                                                write_status=2;
+                                            }
+                                            sendOrderStatusHttp(write_status, orderNumber, data, totalMoney);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+
+                                }else{
+                                    //失败
+                                    tv_title.setText("领款失败");
+                                    tv_schoolName.setText(msg);
+                                    //5秒以后恢复状态
+                                    new Handler().postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            tv_title.setText("领 款 机");
+                                            tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
+                                        }
+                                    },5*1000);
+                                }
+                            }
+                        }
+                    });
+
+                }
+            });
+        }
+
+
+    }
+
+
+    //给服务器发送写卡成功还是失败的状态
+    private void sendOrderStatusHttp(int orderStatus,String orderNum ,String money, String totalMoney){
+        //post请求提交键值对，1分钟向服务器发送一次状态
+        OkHttpClient okHttpClient=new OkHttpClient();
+        FormBody formBody = new FormBody.Builder()
+                .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
+                .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
+                .add(Commons.SN_CARD_STATUS,String.valueOf(orderStatus))
+                .add(Commons.SN_CARD_ORDER_NUM,orderNum)
+                .build();
+        Request request=new Request.Builder()
+                .url(NetURL.URL_CONFIRM_WRITE_STATUS).post(formBody).build();
+        Call call=okHttpClient.newCall(request);
+
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.i(TAG, "NetURL.URL_CONFIRM_WRITE_STATUS onFailure: "+e);
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                Log.i(TAG, "NetURL.URL_CONFIRM_WRITE_STATUS onResponse: "+response.body().string());
+                String respon=response.body().string();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        OrderStatusResultBean resultBean=new Gson().fromJson(respon, new TypeToken<OrderStatusResultBean>(){}.getType());
+                        if (resultBean!=null){
+                            int status=resultBean.getStatus();
+                            String msg=resultBean.getMsg();
+                            if (status==1){
+                                //成功，删除本地保存的订单号
+
+
+                            }else {
+                                //失败，保存订单号到本地数据库，
+
+
+                            }
+                            Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
+
+                            tv_title.setText("领款成功");
+                            tv_schoolName.setText("领款金额："+money+"\n当前余额："+totalMoney);
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tv_title.setText("领 款 机");
+                                    tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
+                                }
+                            },5*1000);
+
+                        }
+
+                    }
+                });
+            }
+        });
+
+    }
+
+
+    //TODO 需要增加一个后台不断提交给服务端写卡成功，未成功报告状态给服务端的http请求方法。
+
+
+    //TODO 需要增加本地缓存订单策略。
 
 }

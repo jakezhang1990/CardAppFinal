@@ -12,4 +12,10 @@ public class Commons {
     public static final String SETTING_COMMUNICATE_PWD="key";//通讯秘钥
     public static final String SETTING_SERVER_ADDRESS="server_address";//服务器地址
     public static final String SETTING_COMPANY_NAME="company_name";//单位名称
+
+    public static final String SN_CARD_SN_NUMBER="personcardno";//水卡卡号
+
+    public static final String SN_CARD_STATUS="status";//操作状态，1写卡成功，2写卡失败
+
+    public static final String SN_CARD_ORDER_NUM="ordersn";//订单号
 }

@@ -84,7 +84,7 @@ public class HomeActivity extends AppCompatActivity {
         //初始化卡设备
         cardInitDev();
 
-        cardDataReciver = new CardDataReciver(new MainActivity.CallBackDataDisPlay());
+//        cardDataReciver = new CardDataReciver(new MainActivity.CallBackDataDisPlay());
         IntentFilter intentFilter = new IntentFilter("cn.soft.recvier.MY_RECIVER");
         registerReceiver(cardDataReciver, intentFilter);
     }
