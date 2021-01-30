@@ -307,7 +307,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) );
 
                 Log.i(TAG, "onCallBack: 广播回调刷新界面");
-                getMoneyHttp(cardDataRst.getM());//申请领款
+                getMoneyHttp(cardDataRst.getM() ,cardDataRst.getReadKeyHexStr());//申请领款
 
             }
         }
@@ -353,36 +353,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private void getMoneyHttp(BigDecimal balance){
+    private void getMoneyHttp(BigDecimal balance, String ReadKeyHexStr){
 
-        /*
-        runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String str = null;
-                        try {
-                            str = cardOperator.getCardNumberStr();
-                            if (str == null) {
-                                Toast.makeText(getApplicationContext(), "未检查IC卡", Toast.LENGTH_LONG).show();
-                            } else {
-                                initCardText.setText(str);
-                            }
-                        } catch (InterruptedException e) {
-                            Toast.makeText(getApplicationContext(), "读取卡出错", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
-        * */
-        String card_sn=null;
-        try {
-            card_sn=cardOperator.getCardKeyStr();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Log.i(TAG, "getMoneyHttp: 卡片ReadKeyHexStr= "+ReadKeyHexStr);
 
-        Log.i(TAG, "getMoneyHttp: 卡片card_sn= "+card_sn);
-
-        if (TextUtils.isEmpty(card_sn)){
+        if (TextUtils.isEmpty(ReadKeyHexStr)){
             Toast.makeText(this,"卡片SN号读取失败，非IC卡",Toast.LENGTH_SHORT).show();
         }else{
             //申请领款接口
@@ -390,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             FormBody formBody = new FormBody.Builder()
                     .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
                     .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
-                    .add(Commons.SN_CARD_SN_NUMBER, card_sn)
+                    .add(Commons.SN_CARD_SN_NUMBER, ReadKeyHexStr)
                     .build();
             Request request=new Request.Builder()
                     .url(NetURL.URL_APPLY_DRAW_MONEY).post(formBody).build();
@@ -404,9 +379,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                    Log.i(TAG, "NetURL.URL_APPLY_DRAW_MONEY onResponse: "+response.body().string());
                     String respon=response.body().string();
+                    Log.i(TAG, "NetURL.URL_APPLY_DRAW_MONEY onResponse: "+respon);
+
                     runOnUiThread(new Runnable() {
+
                         @Override
                         public void run() {
                             CreateOrderBean createOrderBean=new Gson().fromJson(respon, new TypeToken<CreateOrderBean>(){}.getType());
@@ -488,8 +465,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                Log.i(TAG, "NetURL.URL_CONFIRM_WRITE_STATUS onResponse: "+response.body().string());
                 String respon=response.body().string();
+                Log.i(TAG, "NetURL.URL_CONFIRM_WRITE_STATUS onResponse: "+respon);
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
