@@ -16,6 +16,28 @@
         android:layout_height="wrap_content"/>
 
     <TextView
+        android:id="@+id/netStatTV"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:layout_margin="16dp"
+        android:text="-"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/netStatTV2"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:layout_margin="16dp"
+        android:text="-"
+        app:layout_constraintLeft_toRightOf="@id/netStatTV"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
         android:id="@+id/tv_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -1,9 +1,13 @@
 package com.cardapp.card;
 
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,6 +27,7 @@ import com.cardapp.CreateOrderBean;
 import com.cardapp.HomeActivity;
 import com.cardapp.NetURL;
 import com.cardapp.OrderStatusResultBean;
+import com.cardapp.ResultBean;
 import com.cardapp.TimeRunnable;
 import com.cardapp.card.reciver.CardDataReciver;
 import com.cardapp.card.service.CardService;
@@ -55,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static TextView txtDisplay;
     private static CardOperator cardOperator = null;
 
+    private TextView netStatTV, netStatTV2;
+
     CardDataReciver cardDataReciver;
 
 
@@ -68,6 +75,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(getApplicationContext(), "初始化成功", Toast.LENGTH_LONG).show();
             } else if (msg.what == -1) {
                 Toast.makeText(getApplicationContext(), "初始化失败", Toast.LENGTH_LONG).show();
+            } else if(msg.what==0x011){
+                boolean isNetwork=isNetworkConnected();
+                boolean wifi=isWifiConnected();
+                boolean mobile=isMobileConnected();
+                if (isNetwork){
+                    netStatTV2.setText("已联网");
+                    if (wifi){
+                        netStatTV2.setText("已联网-wifi");
+                    }
+                    if (mobile){
+                        netStatTV2.setText("已联网-4G");
+                    }
+                }else {
+                    netStatTV2.setText("设备未联网");
+                }
             }
             return true;
         }
@@ -118,6 +140,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_schoolName=findViewById(R.id.tv_schoolName);
         tv_machineNum=findViewById(R.id.tv_machineNum);
 
+        netStatTV=findViewById(R.id.netStatTV);
+        netStatTV2=findViewById(R.id.netStatTV2);
+
         tv_title=findViewById(R.id.tv_title);
 
         sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
@@ -125,7 +150,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_machineNum.setText("机号："+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"01"));
 
         //1分钟给服务器发一次机器状态
-        new Thread(new MainActivity.MachineStateRunnable()).start();
+        new Thread(new MachineStateRunnable()).start();
+
+        //判断网络状态，10秒判断一次
+        new Thread(new NetStatRunable()).start();
 
 
         TimeRunnable timeRunnable=new TimeRunnable(tv_date);
@@ -318,8 +346,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void run() {
             do {
                 try {
-                    Thread.sleep(60*1000);
                     getMessageHttp();
+                    Thread.sleep(60*1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -343,11 +371,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 Log.i(TAG, "NetURL.URL_MACHINE_STATE onFailure: "+e);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        netStatTV.setText("离线");
+                    }
+                });
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 Log.i(TAG, "NetURL.URL_MACHINE_STATE onResponse: "+response.body().string());
+                String respon=response.body().string();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ResultBean resultBean=new Gson().fromJson(respon, new TypeToken<ResultBean>(){}.getType());
+                        if (resultBean!=null && resultBean.getStatus()==1){
+                            netStatTV.setText("在线");
+                        }else{
+                            netStatTV.setText("离线");
+                        }
+
+                    }
+                });
             }
         });
 
@@ -511,5 +558,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     //TODO 需要增加本地缓存订单策略。
+
+
+
+    /**
+     * 网络是否可用
+     * @return
+     */
+    public boolean isNetworkConnected(){
+        ConnectivityManager manager=(ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (manager.getActiveNetworkInfo()!=null){
+            return manager.getActiveNetworkInfo().isAvailable();
+        }
+        return false;
+    }
+
+    /**
+     * 判断WiFi是否可用
+     */
+    public boolean isWifiConnected() {
+        ConnectivityManager mConnectivityManager = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWiFiNetworkInfo = mConnectivityManager
+                .getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        if (mWiFiNetworkInfo != null) {
+            return mWiFiNetworkInfo.isAvailable();
+        }else {
+            return false;
+        }
+    }
+
+    /**
+     * 判断mobile 4G网络是否可用
+     */
+    public boolean isMobileConnected() {
+        ConnectivityManager mConnectivityManager = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mMobileNetworkInfo = mConnectivityManager
+                .getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        if (mMobileNetworkInfo != null) {
+            return mMobileNetworkInfo.isAvailable();
+        }else{
+            return false;
+        }
+    }
+
+    public class NetStatRunable implements Runnable{
+        @Override
+        public void run() {
+            do {
+                try {
+                    Thread.sleep(10*1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Message message=mHandler.obtainMessage();
+                message.what=0x011;
+                mHandler.sendMessage(message);
+            }while (true);
+
+
+        }
+    }
+
 
 }

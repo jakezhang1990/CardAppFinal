@@ -36,7 +36,7 @@ import okhttp3.Response;
 
 public class HomeActivity extends AppCompatActivity {
     CardDataReciver cardDataReciver;
-    TextView tv_date, tv_schoolName, tv_machineNum;
+    TextView tv_date, tv_schoolName, tv_machineNum, netStatTV;
 
 
     private static CardOperator cardOperator = null;
@@ -73,6 +73,8 @@ public class HomeActivity extends AppCompatActivity {
         sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
         tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
         tv_machineNum.setText("机号："+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"01"));
+
+        netStatTV=findViewById(R.id.netStatTV);
 
         //1分钟给服务器发一次机器状态
         new Thread(new MachineStateRunnable()).start();
@@ -127,11 +129,25 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 Log.i(TAG, "NetURL.URL_MACHINE_STATE onFailure: "+e);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+//                        netStatTV.setText("离线");
+                    }
+                });
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 Log.i(TAG, "NetURL.URL_MACHINE_STATE onResponse: "+response.body().string());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+//                        ResultBean resultBean=new Gson
+//
+//                        netStatTV.setText("在线");
+                    }
+                });
             }
         });
 
