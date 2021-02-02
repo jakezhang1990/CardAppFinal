@@ -77,16 +77,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(getApplicationContext(), "初始化失败", Toast.LENGTH_LONG).show();
             } else if(msg.what==0x011){
                 boolean isNetwork=isNetworkConnected();
-                boolean wifi=isWifiConnected();
-                boolean mobile=isMobileConnected();
+//                boolean wifi=isWifiConnected();
+//                boolean mobile=isMobileConnected();
                 if (isNetwork){
                     netStatTV2.setText("已联网");
-                    if (wifi){
+
+                    /*if (wifi){
                         netStatTV2.setText("已联网-wifi");
                     }
                     if (mobile){
                         netStatTV2.setText("已联网-4G");
-                    }
+                    }*/
                 }else {
                     netStatTV2.setText("设备未联网");
                 }
@@ -335,7 +336,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) );
 
                 Log.i(TAG, "onCallBack: 广播回调刷新界面");
-                getMoneyHttp(cardDataRst.getM() ,cardDataRst.getReadKeyHexStr());//申请领款
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+//                        Log.i(TAG, "run: cardDataRst.getReadKeyHexStr()="+cardDataRst.getReadKeyHexStr());
+                        Log.i(TAG, "run: "+cardDataRst.getCardNumHexStr());
+                        String card_number1=Integer.valueOf(cardDataRst.getCardNumHexStr().substring(0,4),16).toString();
+                        String card_number2=Integer.valueOf(cardDataRst.getCardNumHexStr().substring(4,cardDataRst.getCardNumHexStr().length()),16).toString();
+                        String card_number_full=card_number1+card_number2;
+                        Log.i(TAG, "run: card_number_full="+card_number_full);
+                        getMoneyHttp(cardDataRst.getM() ,card_number_full);//申请领款
+                    }
+                },2*1000);
+
 
             }
         }
@@ -381,8 +394,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                Log.i(TAG, "NetURL.URL_MACHINE_STATE onResponse: "+response.body().string());
                 String respon=response.body().string();
+                Log.i(TAG, "NetURL.URL_MACHINE_STATE onResponse: "+respon);
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
