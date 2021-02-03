@@ -130,9 +130,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnVoidCardInit.setOnClickListener(this);
         btnOldCardRestCtrl.setOnClickListener(this);
         btnStopService.setOnClickListener(this);
-        btnRestOneBlk.setOnClickListener(this);
+        btnRestOneBlk.setOnClickListener(this);*/
         //初始化卡设备
-        cardInitDev();*/
+        cardInitDev();
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_home);
@@ -376,6 +376,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
                 .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
                 .build();
+        Log.i(TAG, "getMessageHttp: 状态报告接口参数："
+                +Commons.SETTING_MACHINE_NUMBER+":"+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")
+                +Commons.SETTING_COMMUNICATE_PWD+":"+sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""));
         Request request=new Request.Builder()
                 .url(NetURL.URL_MACHINE_STATE).post(formBody).build();
         Call call=okHttpClient.newCall(request);
@@ -428,6 +431,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
                     .add(Commons.SN_CARD_SN_NUMBER, ReadKeyHexStr)
                     .build();
+            Log.i(TAG, "getMoneyHttp: 申请领款接口参数"
+                    +Commons.SETTING_MACHINE_NUMBER+":"+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")
+                    +Commons.SETTING_COMMUNICATE_PWD+":"+sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,"")
+                    +Commons.SN_CARD_SN_NUMBER+":"+ReadKeyHexStr);
             Request request=new Request.Builder()
                     .url(NetURL.URL_APPLY_DRAW_MONEY).post(formBody).build();
             Call call=okHttpClient.newCall(request);
@@ -462,6 +469,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         try {
 //                                                String data = writeText.getText().toString();
                                             boolean ss = cardOperator.writeData(data, 1);
+                                            Log.i(TAG, "run: data="+data);
+                                            Log.i(TAG, "run: ss="+ss);
 //                                            writeText.setText(String.valueOf(ss));
                                             int write_status=0;
                                             if (ss){
@@ -514,6 +523,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .add(Commons.SN_CARD_STATUS,String.valueOf(orderStatus))
                 .add(Commons.SN_CARD_ORDER_NUM,orderNum)
                 .build();
+        Log.i(TAG, "sendOrderStatusHttp: 读写卡接口请求参数："
+                +Commons.SETTING_MACHINE_NUMBER+":"+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")
+                +Commons.SETTING_COMMUNICATE_PWD+":"+sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,"")
+                +Commons.SN_CARD_STATUS+":"+String.valueOf(orderStatus)
+                +Commons.SN_CARD_ORDER_NUM+":"+orderNum);
+
         Request request=new Request.Builder()
                 .url(NetURL.URL_CONFIRM_WRITE_STATUS).post(formBody).build();
         Call call=okHttpClient.newCall(request);
