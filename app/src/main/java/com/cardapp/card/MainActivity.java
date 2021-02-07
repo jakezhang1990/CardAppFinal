@@ -327,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         thread.start();
     }
-
+    volatile boolean flagss=false;
     public /*static*/ class CallBackDataDisPlay {
         public void onCallBack(CardDataRst cardDataRst) {
             if (cardDataRst != null) {
@@ -336,6 +336,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) );
 
                 Log.i(TAG, "onCallBack: 广播回调刷新界面");
+
+
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -345,11 +347,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         String card_number2=Integer.valueOf(cardDataRst.getCardNumHexStr().substring(4,cardDataRst.getCardNumHexStr().length()),16).toString();
                         String card_number_full=card_number1+card_number2;
                         Log.i(TAG, "run: card_number_full="+card_number_full);
-                        getMoneyHttp(cardDataRst.getM() ,card_number_full);//申请领款
+//                        getMoneyHttp(cardDataRst.getM() ,card_number_full);//申请领款
+
+                            //测试代码开始  开始写卡
+//                                    tv_title.setText("余额:");
+
+                                String data="10";//固定写入10元
+
+                                try {
+//                                                String data = writeText.getText().toString();
+                                    boolean ss = cardOperator.writeData(data, 1);
+                                    Log.i(TAG, "run: data="+data);
+                                    Log.i(TAG, "run: ss="+ss);
+//                                            writeText.setText(String.valueOf(ss));
+                                    flagss=ss;
+                                    if (ss){
+                                        //写卡成功 1
+//                                        Toast.makeText(MainActivity.this, "写卡成功，写入10", Toast.LENGTH_SHORT).show();
+                                    }else{
+                                        //写卡失败 2
+//                                        Toast.makeText(MainActivity.this, "写卡失败", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
                     }
                 },2*1000);
 
 
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        BigDecimal balance= cardDataRst.getM();
+                            String totalMoney=String.valueOf(balance.add(new BigDecimal("10")) );
+                            if (flagss){
+                                tv_title.setText("写卡10元成功");
+                            }else{
+                                tv_title.setText("写卡10元失败");
+                            }
+//
+                            tv_schoolName.setText("领款金额：10"+"\n当前余额："+totalMoney);
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tv_title.setText("领 款 机");
+                                    tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
+                                }
+                            },3*1000);
+
+
+
+                    }
+                });
+
+//测试代码结束
             }
         }
     }
