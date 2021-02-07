@@ -28,11 +28,16 @@ public class SplashSettingActivity extends AppCompatActivity implements View.OnC
     EditText editv_machineNum,editv_pwdkey,editv_serverAddress,editv_companyName;
     Button btn_back,btn_save;
 
+    DBManger dbManger;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_splash_setting);
+
+        dbManger=DBManger.getInstance(this);
+        dbManger.add();
 
         sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
         editor=sharedPreferences.edit();

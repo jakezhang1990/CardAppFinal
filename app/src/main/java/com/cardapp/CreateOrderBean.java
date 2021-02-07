@@ -96,5 +96,16 @@ public class CreateOrderBean {
         public void setId(String id) {
             this.id = id;
         }
+
+        @Override
+        public String toString() {
+            return "DataBean{" +
+                    "serial='" + serial + '\'' +
+                    ", wallet_id='" + wallet_id + '\'' +
+                    ", personcardno='" + personcardno + '\'' +
+                    ", money='" + money + '\'' +
+                    ", id='" + id + '\'' +
+                    '}';
+        }
     }
 }
