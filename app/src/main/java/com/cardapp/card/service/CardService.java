@@ -33,8 +33,12 @@ public class CardService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        /*Bundle bundle = intent.getExtras();
+        /*
         CardOperator cardOperator = (CardOperator) bundle.getSerializable("cardOp");*/
+        if (cardOperator==null){
+            Bundle bundle = intent.getExtras();
+            cardOperator = (CardOperator) bundle.getSerializable("cardOp");
+        }
         Intent cardIntent = new Intent("cn.soft.recvier.MY_RECIVER");
 
         Thread thread = new Thread(new Runnable() {

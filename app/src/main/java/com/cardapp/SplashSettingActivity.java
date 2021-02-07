@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -12,6 +13,19 @@ import android.widget.EditText;
 
 import com.cardapp.card.MainActivity;
 import com.cardapp.card.R;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * @Author: jakezhang
@@ -28,7 +42,8 @@ public class SplashSettingActivity extends AppCompatActivity implements View.OnC
     EditText editv_machineNum,editv_pwdkey,editv_serverAddress,editv_companyName;
     Button btn_back,btn_save;
 
-    DBManger dbManger;
+//    DBManger dbManger;
+    private String TAG=SplashSettingActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +51,8 @@ public class SplashSettingActivity extends AppCompatActivity implements View.OnC
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_splash_setting);
 
-        dbManger=DBManger.getInstance(this);
-        dbManger.add();
+//        dbManger=DBManger.getInstance(this);
+//        dbManger.add();
 
         sharedPreferences=getSharedPreferences(Commons.SHARED_PREF_SPLASH,MODE_PRIVATE);
         editor=sharedPreferences.edit();
@@ -78,4 +93,53 @@ public class SplashSettingActivity extends AppCompatActivity implements View.OnC
             finish();
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getInfoHttp();
+    }
+
+    private void getInfoHttp(){
+//
+        OkHttpClient okHttpClient=new OkHttpClient();
+        FormBody formBody = new FormBody.Builder()
+                .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
+                .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
+                .build();
+
+        Request request=new Request.Builder()
+                .url(NetURL.URL_INFOS).post(formBody).build();
+        Call call=okHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.i(TAG, "onFailure: URL_INFOS ");
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                String respon=response.body().string();
+                Log.i(TAG, "onResponse: URL_INFOS response="+respon);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        MessageInfoBean bean=new Gson().fromJson(respon,new TypeToken<MessageInfoBean>(){}.getType());
+                        if (bean!=null&& bean.getData()!=null){
+                            String serverAdress=bean.getData().getServer_domain();
+                            String schoolName=bean.getData().getOrg_name();
+                            editv_serverAddress.setText(serverAdress);
+                            editv_companyName.setText(schoolName);
+
+                            editor.putString(Commons.SETTING_SERVER_ADDRESS,serverAdress);
+                            editor.putString(Commons.SETTING_COMPANY_NAME,schoolName);
+                            editor.commit();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
 }

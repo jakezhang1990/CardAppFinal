@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.cardapp.Commons;
 import com.cardapp.CreateOrderBean;
+import com.cardapp.DBManger;
 import com.cardapp.HomeActivity;
 import com.cardapp.NetURL;
 import com.cardapp.OrderStatusResultBean;
@@ -64,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     CardDataReciver cardDataReciver;
 
+    DBManger dbManger;
 
     //以下逻辑实现对IC卡的相关操作
 
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dbManger=DBManger.getInstance(this);
         /*setContentView(R.layout.activity_main);
         readText = findViewById(R.id.cardReadData);
         writeText = findViewById(R.id.cardWriteData);
@@ -327,7 +330,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         thread.start();
     }
-    volatile boolean flagss=false;
+
     public /*static*/ class CallBackDataDisPlay {
         public void onCallBack(CardDataRst cardDataRst) {
             if (cardDataRst != null) {
@@ -335,50 +338,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) + ",次数：" + cardDataRst.getTime());
                 tv_title.setText("余额:" + String.valueOf(cardDataRst.getM()) );
 
-                Log.i(TAG, "onCallBack: 广播回调刷新界面");
-
-
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-//                        Log.i(TAG, "run: cardDataRst.getReadKeyHexStr()="+cardDataRst.getReadKeyHexStr());
+                        Log.i(TAG, "onCallBack: 广播回调刷新界面");
+                        Log.i(TAG, "run: cardDataRst.getReadKeyHexStr()="+cardDataRst.getReadKeyHexStr());
                         Log.i(TAG, "run: "+cardDataRst.getCardNumHexStr());
                         String card_number1=Integer.valueOf(cardDataRst.getCardNumHexStr().substring(0,4),16).toString();
                         String card_number2=Integer.valueOf(cardDataRst.getCardNumHexStr().substring(4,cardDataRst.getCardNumHexStr().length()),16).toString();
                         String card_number_full=card_number1+card_number2;
                         Log.i(TAG, "run: card_number_full="+card_number_full);
-//                        getMoneyHttp(cardDataRst.getM() ,card_number_full);//申请领款
-
-                            //测试代码开始  开始写卡
-//                                    tv_title.setText("余额:");
-
-                                String data="10";//固定写入10元
-
-                                try {
-//                                                String data = writeText.getText().toString();
-                                    boolean ss = cardOperator.writeData(data, 1);
-                                    Log.i(TAG, "run: data="+data);
-                                    Log.i(TAG, "run: ss="+ss);
-//                                            writeText.setText(String.valueOf(ss));
-                                    flagss=ss;
-                                    if (ss){
-                                        //写卡成功 1
-//                                        Toast.makeText(MainActivity.this, "写卡成功，写入10", Toast.LENGTH_SHORT).show();
-                                    }else{
-                                        //写卡失败 2
-//                                        Toast.makeText(MainActivity.this, "写卡失败", Toast.LENGTH_SHORT).show();
-                                    }
-
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-
+                        getMoneyHttp(cardDataRst.getM() ,card_number_full);//申请领款
                     }
                 },2*1000);
 
 
+/*
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -399,13 +374,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
                                 }
                             },3*1000);
-
-
-
                     }
                 });
+*/
 
-//测试代码结束
             }
         }
     }
@@ -432,9 +404,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
                 .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
                 .build();
-        Log.i(TAG, "getMessageHttp: 状态报告接口参数："
-                +Commons.SETTING_MACHINE_NUMBER+":"+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")
-                +Commons.SETTING_COMMUNICATE_PWD+":"+sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""));
         Request request=new Request.Builder()
                 .url(NetURL.URL_MACHINE_STATE).post(formBody).build();
         Call call=okHttpClient.newCall(request);
@@ -473,6 +442,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    int write_status=0;
     private void getMoneyHttp(BigDecimal balance, String ReadKeyHexStr){
 
         Log.i(TAG, "getMoneyHttp: 卡片ReadKeyHexStr= "+ReadKeyHexStr);
@@ -487,10 +457,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
                     .add(Commons.SN_CARD_SN_NUMBER, ReadKeyHexStr)
                     .build();
-            Log.i(TAG, "getMoneyHttp: 申请领款接口参数"
-                    +Commons.SETTING_MACHINE_NUMBER+":"+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")
-                    +Commons.SETTING_COMMUNICATE_PWD+":"+sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,"")
-                    +Commons.SN_CARD_SN_NUMBER+":"+ReadKeyHexStr);
+
             Request request=new Request.Builder()
                     .url(NetURL.URL_APPLY_DRAW_MONEY).post(formBody).build();
             Call call=okHttpClient.newCall(request);
@@ -510,6 +477,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         @Override
                         public void run() {
+                            tv_title.setText("正在领款");
+                            tv_schoolName.setText("请保持，不要把卡片移开");
                             CreateOrderBean createOrderBean=new Gson().fromJson(respon, new TypeToken<CreateOrderBean>(){}.getType());
                             if (createOrderBean!=null){
                                 int status=createOrderBean.getStatus();
@@ -522,27 +491,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         String data=dataBean.getMoney();
                                         String totalMoney = String.valueOf(balance.add(new BigDecimal(data)) );
                                         String orderNumber=dataBean.getSerial();
+
+
+
                                         try {
 //                                                String data = writeText.getText().toString();
-                                            boolean ss = cardOperator.writeData(data, 1);
+                                            boolean ss = cardOperator.writeData(data, 0);
                                             Log.i(TAG, "run: data="+data);
                                             Log.i(TAG, "run: ss="+ss);
 //                                            writeText.setText(String.valueOf(ss));
-                                            int write_status=0;
+//                                            int write_status=0;
                                             if (ss){
                                                 //写卡成功 1
                                                 write_status=1;
+
                                             }else{
                                                 //写卡失败 2
                                                 write_status=2;
+
                                             }
-                                            sendOrderStatusHttp(write_status, orderNumber, data, totalMoney);
+
                                         } catch (InterruptedException e) {
                                             e.printStackTrace();
                                         } catch (Exception e) {
                                             e.printStackTrace();
+                                        }finally {
+                                            new Handler().postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    sendOrderStatusHttp(write_status, orderNumber, data, totalMoney);
+                                                }
+                                            },500);
                                         }
                                     }
+
+                                    /*if (write_status==1){
+                                        dbManger.add(dataBean.getWallet_id(),dataBean.getPersoncardno(),dataBean.getSerial(),dataBean.getMoney(),dataBean.getId());
+                                        dbManger.select();
+                                    }*/
 
                                 }else{
                                     //失败
@@ -555,8 +541,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                             tv_title.setText("领 款 机");
                                             tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
                                         }
-                                    },5*1000);
+                                    },3*1000);
                                 }
+                            }else{
+                               //接口失败
                             }
                         }
                     });
@@ -572,18 +560,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //给服务器发送写卡成功还是失败的状态
     private void sendOrderStatusHttp(int orderStatus,String orderNum ,String money, String totalMoney){
         //post请求提交键值对，1分钟向服务器发送一次状态
+if (orderStatus==1){
+            tv_title.setText("领款成功");
+            tv_schoolName.setText("领款金额："+money+"\n当前余额："+totalMoney);
+}else{
+            tv_title.setText("领款失败");
+            tv_schoolName.setText("写卡失败");
+}
+        write_status=0;
+
         OkHttpClient okHttpClient=new OkHttpClient();
+
         FormBody formBody = new FormBody.Builder()
                 .add(Commons.SETTING_MACHINE_NUMBER, sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,""))
                 .add(Commons.SETTING_COMMUNICATE_PWD, sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,""))
                 .add(Commons.SN_CARD_STATUS,String.valueOf(orderStatus))
                 .add(Commons.SN_CARD_ORDER_NUM,orderNum)
                 .build();
-        Log.i(TAG, "sendOrderStatusHttp: 读写卡接口请求参数："
-                +Commons.SETTING_MACHINE_NUMBER+":"+sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")
-                +Commons.SETTING_COMMUNICATE_PWD+":"+sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,"")
-                +Commons.SN_CARD_STATUS+":"+String.valueOf(orderStatus)
-                +Commons.SN_CARD_ORDER_NUM+":"+orderNum);
 
         Request request=new Request.Builder()
                 .url(NetURL.URL_CONFIRM_WRITE_STATUS).post(formBody).build();
@@ -609,17 +602,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             String msg=resultBean.getMsg();
                             if (status==1){
                                 //成功，删除本地保存的订单号
-
+//                                dbManger.del(orderNum);
 
                             }else {
                                 //失败，保存订单号到本地数据库，
 
 
                             }
-                            Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
+                            /*Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
+                            if (orderStatus!=1 || status!=1){
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        tv_title.setText("领款失败");
+                                        tv_schoolName.setText(msg);
+                                    }
+                                },1000);
+                            }*/
 
-                            tv_title.setText("领款成功");
-                            tv_schoolName.setText("领款金额："+money+"\n当前余额："+totalMoney);
+
+                            /*tv_title.setText("领款成功");
+                            tv_schoolName.setText("领款金额："+money+"\n当前余额："+totalMoney);*/
 
                             new Handler().postDelayed(new Runnable() {
                                 @Override
@@ -627,7 +630,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     tv_title.setText("领 款 机");
                                     tv_schoolName.setText(sharedPreferences.getString(Commons.SETTING_COMPANY_NAME,""));
                                 }
-                            },5*1000);
+                            },3*1000);
 
                         }
 

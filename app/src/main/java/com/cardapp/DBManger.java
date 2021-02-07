@@ -81,24 +81,25 @@ public class DBManger {
 
 //        String result = "";
         List<CreateOrderBean.DataBean> list=new ArrayList<>();
-        do {
-            cursor.moveToFirst();
-            String wallet_id = cursor.getString(cursor.getColumnIndex("_text"));
-            String personcardno = cursor.getString(cursor.getColumnIndex("_text"));
-            String serial = cursor.getString(cursor.getColumnIndex("_text"));
-            String money = cursor.getString(cursor.getColumnIndex("_text"));
-            String id = cursor.getString(cursor.getColumnIndex("_text"));
-            CreateOrderBean.DataBean bean=new CreateOrderBean.DataBean();
-            bean.setId(id);
-            bean.setMoney(money);
-            bean.setSerial(serial);
-            bean.setPersoncardno(personcardno);
-            bean.setWallet_id(wallet_id);
-            list.add(bean);
-            Log.i(TAG, "select: "+bean.toString()+ "\n");
+        if (cursor.moveToFirst()){
+            do {
+                String wallet_id = cursor.getString(cursor.getColumnIndex("wallet_id"));
+                String personcardno = cursor.getString(cursor.getColumnIndex("personcardno"));
+                String serial = cursor.getString(cursor.getColumnIndex("serial"));
+                String money = cursor.getString(cursor.getColumnIndex("money"));
+                String id = cursor.getString(cursor.getColumnIndex("id"));
+                CreateOrderBean.DataBean bean=new CreateOrderBean.DataBean();
+                bean.setId(id);
+                bean.setMoney(money);
+                bean.setSerial(serial);
+                bean.setPersoncardno(personcardno);
+                bean.setWallet_id(wallet_id);
+                list.add(bean);
+                Log.i(TAG, "select: "+bean.toString()+ "\n");
 //            result += bean.toString()+ "\n";
-
-        }while (cursor.moveToNext());
+            }while (cursor.moveToNext());
+        }
+        cursor.close();
 
         /*while (cursor.moveToNext()) {
 
