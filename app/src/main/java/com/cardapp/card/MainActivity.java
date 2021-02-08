@@ -566,6 +566,7 @@ if (orderStatus==1){
 }else{
             tv_title.setText("领款失败");
             tv_schoolName.setText("写卡失败");
+//    orderStatus=2;
 }
         write_status=0;
 
@@ -577,6 +578,13 @@ if (orderStatus==1){
                 .add(Commons.SN_CARD_STATUS,String.valueOf(orderStatus))
                 .add(Commons.SN_CARD_ORDER_NUM,orderNum)
                 .build();
+
+        Log.i(TAG, "sendOrderStatusHttp: 参数："+
+                Commons.SETTING_MACHINE_NUMBER+" "+ sharedPreferences.getString(Commons.SETTING_MACHINE_NUMBER,"")+
+                Commons.SETTING_COMMUNICATE_PWD+ " "+ sharedPreferences.getString(Commons.SETTING_COMMUNICATE_PWD,"")+
+                Commons.SN_CARD_STATUS+" "+ String.valueOf(orderStatus)+
+                Commons.SN_CARD_ORDER_NUM+" "+ orderNum
+        );
 
         Request request=new Request.Builder()
                 .url(NetURL.URL_CONFIRM_WRITE_STATUS).post(formBody).build();
